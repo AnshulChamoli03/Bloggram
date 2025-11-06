@@ -7,6 +7,9 @@
     "dev": "nodemon Backend/server.js"
   },
   "type": "module",
+  "workspaces": [
+    "Frontend"
+  ],
   "keywords": [],
   "author": "",
   "license": "ISC",
