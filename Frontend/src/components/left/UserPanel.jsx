@@ -1,34 +1,17 @@
-import { Box, VStack, Avatar, Text, Button, Skeleton } from '@chakra-ui/react';
-import { useState, useEffect } from 'react';
-import { getMe } from '../../services/userService';
+import { Box, Text, Button } from '@chakra-ui/react';
+import { useAuth } from '../../contexts/AuthContext';
 
 export default function UserPanel() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    loadUser();
-  }, []);
-
-  const loadUser = async () => {
-    try {
-      const userData = await getMe();
-      setUser(userData);
-    } catch (error) {
-      console.error('Failed to load user:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
       <Box bg="white" p={4} borderRadius="lg" boxShadow="sm" mb={4}>
-        <VStack align="stretch" spacing={3}>
-          <Skeleton borderRadius="full" width="80px" height="80px" />
-          <Skeleton height="20px" />
-          <Skeleton height="20px" width="60%" />
-        </VStack>
+        <Box display="flex" flexDirection="column" gap={3}>
+          <Box borderRadius="full" width="80px" height="80px" bg="gray.200" />
+          <Box height="20px" bg="gray.200" borderRadius="md" />
+          <Box height="20px" width="60%" bg="gray.200" borderRadius="md" />
+        </Box>
       </Box>
     );
   }
@@ -41,18 +24,47 @@ export default function UserPanel() {
     );
   }
 
+  // Get initials for avatar
+  const getInitials = (name) => {
+    if (!name) return '?';
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const initials = getInitials(user.userName || user.email);
+
   return (
     <Box bg="white" p={4} borderRadius="lg" boxShadow="sm" mb={4}>
-      <VStack align="stretch" spacing={3}>
-        <VStack spacing={2}>
-          <Avatar size="lg" name={user.name || user.username} src={user.avatar} />
-          <VStack spacing={0}>
-            <Text fontWeight="bold" fontSize="lg">
-              {user.name || user.username}
+      <Box display="flex" flexDirection="column" gap={3}>
+        <Box display="flex" flexDirection="column" alignItems="center" gap={2}>
+          <Box
+            width="80px"
+            height="80px"
+            borderRadius="full"
+            bg="blue.500"
+            display="flex"
+            alignItems="center"
+            justifyContent="center"
+            color="white"
+            fontSize="2xl"
+            fontWeight="bold"
+            backgroundImage={user.profilePicture ? `url(${user.profilePicture})` : 'none'}
+            backgroundSize="cover"
+            backgroundPosition="center"
+          >
+            {!user.profilePicture && initials}
+          </Box>
+          <Box display="flex" flexDirection="column" alignItems="center" gap={0}>
+            <Text fontWeight="bold" fontSize="lg" textAlign="center">
+              {user.userName || user.email}
             </Text>
-            {user.username && user.name && (
-              <Text fontSize="sm" color="gray.500">
-                @{user.username}
+            {user.email && (
+              <Text fontSize="sm" color="gray.500" textAlign="center">
+                {user.email}
               </Text>
             )}
             {user.bio && (
@@ -60,12 +72,12 @@ export default function UserPanel() {
                 {user.bio}
               </Text>
             )}
-          </VStack>
-        </VStack>
+          </Box>
+        </Box>
         <Button colorScheme="blue" variant="outline" size="sm" width="100%">
           Edit Profile
         </Button>
-      </VStack>
+      </Box>
     </Box>
   );
 }

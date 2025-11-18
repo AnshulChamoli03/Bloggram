@@ -1,7 +1,9 @@
 import express from "express";
+import jwt from "jsonwebtoken";
 import Users from "../models/user.model.js";
 import mongoose from "mongoose";
 import { connectDB } from "../config/db.js";
+import { authenticateToken } from "../middleware/auth.middleware.js";
 
 connectDB();
 
@@ -73,10 +75,21 @@ router.post('/login', async (req, res) => {
         // Don't send password in response
         const userResponse = user.toObject();
         delete userResponse.password;
-
+        
+        // Generate JWT token
+        const token = jwt.sign(
+            { 
+                userId: user._id.toString(),
+                email: user.email 
+            }, 
+            process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+            { expiresIn: '7d' } // Token expires in 7 days
+        );
+        
         res.status(200).json({
             message: 'Login successful',
-            user: userResponse
+            user: userResponse,
+            token: token
         });
     } catch (error) {
         res.status(500).json({ error: 'Failed to login', details: error.message });
@@ -90,6 +103,38 @@ router.get('/', async (req, res) => {
         res.status(200).json(users);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch users', details: error.message });
+    }
+});
+
+// Get current user profile (requires authentication)
+router.get('/me', authenticateToken, async (req, res) => {
+    try {
+        const user = await Users.findById(req.user.userId).select('-password');
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+        res.status(200).json(user);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch user profile', details: error.message });
+    }
+});
+
+// Get current user's connections (requires authentication)
+router.get('/me/connections', authenticateToken, async (req, res) => {
+    try {
+        const user = await Users.findById(req.user.userId).select('connections');
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Populate connections with user details
+        const connections = await Users.find({
+            _id: { $in: user.connections || [] }
+        }).select('-password');
+
+        res.status(200).json(connections);
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to fetch connections', details: error.message });
     }
 });
 
@@ -135,13 +180,18 @@ router.get('/search', async (req, res) => {
     }
 });
 
-// Update user
-router.put('/:id', async (req, res) => {
+// Update user (requires authentication - can only update own profile)
+router.put('/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
 
         if (!mongoose.isValidObjectId(id)) {
             return res.status(400).json({ error: 'Invalid user ID' });
+        }
+
+        // Check if user is updating their own profile
+        if (req.user.userId !== id) {
+            return res.status(403).json({ error: 'You can only update your own profile' });
         }
 
         // Don't allow password update through this route (use separate change password route)
@@ -169,13 +219,18 @@ router.put('/:id', async (req, res) => {
     }
 });
 
-// Delete user
-router.delete('/:id', async (req, res) => {
+// Delete user (requires authentication - can only delete own account)
+router.delete('/:id', authenticateToken, async (req, res) => {
     try {
         const { id } = req.params;
 
         if (!mongoose.isValidObjectId(id)) {
             return res.status(400).json({ error: 'Invalid user ID' });
+        }
+
+        // Check if user is deleting their own account
+        if (req.user.userId !== id) {
+            return res.status(403).json({ error: 'You can only delete your own account' });
         }
 
         const deletedUser = await Users.findByIdAndDelete(id);

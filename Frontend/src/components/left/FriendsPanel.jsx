@@ -1,4 +1,4 @@
-import { Box, VStack, Heading, Avatar, Text, Skeleton, SkeletonText } from '@chakra-ui/react';
+import { Box, Heading, Text } from '@chakra-ui/react';
 import { useState, useEffect } from 'react';
 import { getConnections } from '../../services/userService';
 
@@ -22,49 +22,78 @@ export default function FriendsPanel() {
     }
   };
 
+  // Get initials for avatar
+  const getInitials = (name) => {
+    if (!name) return '?';
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <Box bg="white" p={4} borderRadius="lg" boxShadow="sm">
       <Heading size="sm" mb={4}>
         Connections
       </Heading>
       {loading ? (
-        <VStack align="stretch" spacing={3}>
+        <Box display="flex" flexDirection="column" gap={3}>
           {[1, 2, 3].map((i) => (
             <Box key={i} display="flex" gap={3}>
-              <Skeleton borderRadius="full" width="40px" height="40px" />
-              <VStack align="start" spacing={1} flex={1}>
-                <Skeleton height="16px" width="60%" />
-                <Skeleton height="12px" width="40%" />
-              </VStack>
+              <Box borderRadius="full" width="40px" height="40px" bg="gray.200" />
+              <Box display="flex" flexDirection="column" gap={1} flex={1}>
+                <Box height="16px" width="60%" bg="gray.200" borderRadius="md" />
+                <Box height="12px" width="40%" bg="gray.200" borderRadius="md" />
+              </Box>
             </Box>
           ))}
-        </VStack>
+        </Box>
       ) : connections.length === 0 ? (
         <Text color="gray.500" fontSize="sm">
           No connections yet
         </Text>
       ) : (
-        <VStack align="stretch" spacing={3}>
-          {connections.slice(0, 10).map((connection) => (
-            <Box key={connection._id || connection.id} display="flex" gap={3} alignItems="center">
-              <Avatar
-                size="sm"
-                name={connection.name || connection.username}
-                src={connection.avatar}
-              />
-              <VStack align="start" spacing={0} flex={1}>
-                <Text fontSize="sm" fontWeight="medium">
-                  {connection.name || connection.username}
-                </Text>
-                {connection.username && connection.name && (
-                  <Text fontSize="xs" color="gray.500">
-                    @{connection.username}
+        <Box display="flex" flexDirection="column" gap={3}>
+          {connections.slice(0, 10).map((connection) => {
+            const displayName = connection.userName || connection.name || connection.email || 'Unknown';
+            const initials = getInitials(displayName);
+            
+            return (
+              <Box key={connection._id || connection.id} display="flex" gap={3} alignItems="center">
+                <Box
+                  width="40px"
+                  height="40px"
+                  borderRadius="full"
+                  bg="blue.500"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  color="white"
+                  fontSize="xs"
+                  fontWeight="bold"
+                  backgroundImage={connection.profilePicture ? `url(${connection.profilePicture})` : 'none'}
+                  backgroundSize="cover"
+                  backgroundPosition="center"
+                  flexShrink={0}
+                >
+                  {!connection.profilePicture && initials}
+                </Box>
+                <Box display="flex" flexDirection="column" gap={0} flex={1} minWidth={0}>
+                  <Text fontSize="sm" fontWeight="medium" isTruncated>
+                    {displayName}
                   </Text>
-                )}
-              </VStack>
-            </Box>
-          ))}
-        </VStack>
+                  {connection.email && displayName !== connection.email && (
+                    <Text fontSize="xs" color="gray.500" isTruncated>
+                      {connection.email}
+                    </Text>
+                  )}
+                </Box>
+              </Box>
+            );
+          })}
+        </Box>
       )}
     </Box>
   );
