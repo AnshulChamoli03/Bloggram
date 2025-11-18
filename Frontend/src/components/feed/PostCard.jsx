@@ -1,5 +1,6 @@
-import { Box, VStack, HStack, Avatar, Text, Heading, Image, Flex, IconButton } from '@chakra-ui/react';
+import { Box, Text, Button } from '@chakra-ui/react';
 import { Favorite, Comment, Share, MoreVert } from '@mui/icons-material';
+import { IconButton } from '@mui/material';
 import { useState } from 'react';
 
 export default function PostCard({ post }) {
@@ -20,24 +21,52 @@ export default function PostCard({ post }) {
     return /\.(jpg|jpeg|png|gif|webp)$/i.test(url) || (!isVideo(url) && url);
   };
 
+  // Get initials for avatar
+  const getInitials = (name) => {
+    if (!name) return '?';
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
+  const authorName = post.author?.userName || post.author?.name || post.author?.username || post.user?.userName || 'Unknown';
+  const authorAvatar = post.author?.profilePicture || post.author?.avatar || post.user?.profilePicture;
+  const initials = getInitials(authorName);
+
   return (
     <Box bg="white" p={4} borderRadius="lg" boxShadow="sm" mb={4}>
-      <VStack align="stretch" spacing={3}>
+      <Box display="flex" flexDirection="column" gap={3}>
         {/* Post Header */}
-        <HStack justify="space-between">
-          <HStack spacing={3}>
-            <Avatar
-              size="md"
-              name={post.author?.name || post.author?.username}
-              src={post.author?.avatar}
-            />
-            <VStack align="start" spacing={0}>
+        <Box display="flex" justifyContent="space-between" alignItems="center">
+          <Box display="flex" gap={3} alignItems="center">
+            <Box
+              width="40px"
+              height="40px"
+              borderRadius="full"
+              bg="blue.500"
+              display="flex"
+              alignItems="center"
+              justifyContent="center"
+              color="white"
+              fontSize="sm"
+              fontWeight="bold"
+              backgroundImage={authorAvatar ? `url(${authorAvatar})` : 'none'}
+              backgroundSize="cover"
+              backgroundPosition="center"
+              flexShrink={0}
+            >
+              {!authorAvatar && initials}
+            </Box>
+            <Box display="flex" flexDirection="column" gap={0}>
               <Text fontWeight="bold" fontSize="sm">
-                {post.author?.name || post.author?.username}
+                {authorName}
               </Text>
-              {post.author?.username && post.author?.name && (
+              {post.author?.email && authorName !== post.author.email && (
                 <Text fontSize="xs" color="gray.500">
-                  @{post.author.username}
+                  {post.author.email}
                 </Text>
               )}
               {post.createdAt && (
@@ -45,15 +74,15 @@ export default function PostCard({ post }) {
                   {new Date(post.createdAt).toLocaleDateString()}
                 </Text>
               )}
-            </VStack>
-          </HStack>
+            </Box>
+          </Box>
           <IconButton
-            icon={<MoreVert />}
-            variant="ghost"
-            size="sm"
+            size="small"
             aria-label="More options"
-          />
-        </HStack>
+          >
+            <MoreVert fontSize="small" />
+          </IconButton>
+        </Box>
 
         {/* Post Content */}
         {(post.content?.text || post.text) && (
@@ -78,13 +107,15 @@ export default function PostCard({ post }) {
                     Your browser does not support the video tag.
                   </video>
                 ) : (
-                  <Image
+                  <Box
+                    as="img"
                     src={mediaUrls[0]}
                     alt="Post media"
                     borderRadius="md"
                     maxH="500px"
-                    objectFit="contain"
                     width="100%"
+                    objectFit="contain"
+                    style={{ objectFit: 'contain' }}
                   />
                 )
               ) : (
@@ -109,13 +140,14 @@ export default function PostCard({ post }) {
                         <source src={url} type="video/mp4" />
                       </video>
                     ) : (
-                      <Image
+                      <Box
+                        as="img"
                         src={url}
                         alt={`Post media ${index + 1}`}
                         borderRadius="md"
                         height="200px"
-                        objectFit="cover"
                         width="100%"
+                        style={{ objectFit: 'cover' }}
                       />
                     )}
                   </Box>
@@ -128,7 +160,7 @@ export default function PostCard({ post }) {
 
         {/* Tags */}
         {post.tags && post.tags.length > 0 && (
-          <Flex gap={2} flexWrap="wrap">
+          <Box display="flex" gap={2} flexWrap="wrap">
             {post.tags.map((tag, index) => (
               <Text
                 key={index}
@@ -141,43 +173,61 @@ export default function PostCard({ post }) {
                 #{tag}
               </Text>
             ))}
-          </Flex>
+          </Box>
+        )}
+
+        {/* Hashtags */}
+        {post.content?.hashtags && post.content.hashtags.length > 0 && (
+          <Box display="flex" gap={2} flexWrap="wrap">
+            {post.content.hashtags.map((tag, index) => (
+              <Text
+                key={index}
+                as="span"
+                color="blue.500"
+                fontSize="sm"
+                cursor="pointer"
+                _hover={{ textDecoration: 'underline' }}
+              >
+                {tag}
+              </Text>
+            ))}
+          </Box>
         )}
 
         {/* Post Actions */}
-        <HStack spacing={4} pt={2} borderTop="1px" borderColor="gray.100">
-          <HStack spacing={1}>
+        <Box display="flex" gap={4} pt={2} borderTop="1px" borderColor="gray.100" alignItems="center">
+          <Box display="flex" gap={1} alignItems="center">
             <IconButton
-              icon={<Favorite />}
-              colorScheme={liked ? 'red' : 'gray'}
-              variant={liked ? 'solid' : 'ghost'}
-              size="sm"
+              size="small"
               onClick={handleLike}
               aria-label="Like"
-            />
+              color={liked ? 'error' : 'default'}
+            >
+              <Favorite fontSize="small" />
+            </IconButton>
             <Text fontSize="sm" color="gray.600">
               {likeCount}
             </Text>
-          </HStack>
-          <HStack spacing={1}>
+          </Box>
+          <Box display="flex" gap={1} alignItems="center">
             <IconButton
-              icon={<Comment />}
-              variant="ghost"
-              size="sm"
+              size="small"
               aria-label="Comment"
-            />
+            >
+              <Comment fontSize="small" />
+            </IconButton>
             <Text fontSize="sm" color="gray.600">
               {post.comments?.length || 0}
             </Text>
-          </HStack>
+          </Box>
           <IconButton
-            icon={<Share />}
-            variant="ghost"
-            size="sm"
+            size="small"
             aria-label="Share"
-          />
-        </HStack>
-      </VStack>
+          >
+            <Share fontSize="small" />
+          </IconButton>
+        </Box>
+      </Box>
     </Box>
   );
 }
