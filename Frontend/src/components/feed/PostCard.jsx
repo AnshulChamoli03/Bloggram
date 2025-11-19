@@ -32,8 +32,16 @@ export default function PostCard({ post }) {
       .slice(0, 2);
   };
 
-  const authorName = post.author?.userName || post.author?.name || post.author?.username || post.user?.userName || 'Unknown';
-  const authorAvatar = post.author?.profilePicture || post.author?.avatar || post.user?.profilePicture;
+  const authorName =
+    post.userName ||
+    post.author?.userName ||
+    post.author?.name ||
+    post.author?.username ||
+    post.user?.userName ||
+    post.user?.name ||
+    post.user?.username ||
+    'Unknown';
+  const authorAvatar = post.author?.profilePicture || post.author?.avatar || post.user?.profilePicture || post.userAvatar;
   const initials = getInitials(authorName);
 
   return (
@@ -159,9 +167,9 @@ export default function PostCard({ post }) {
         )}
 
         {/* Tags */}
-        {post.tags && post.tags.length > 0 && (
+        {(post.tags && post.tags.length > 0) || (post.hashtags && post.hashtags.length > 0) ? (
           <Box display="flex" gap={2} flexWrap="wrap">
-            {post.tags.map((tag, index) => (
+            {(post.tags || post.hashtags || []).map((tag, index) => (
               <Text
                 key={index}
                 as="span"
@@ -174,7 +182,7 @@ export default function PostCard({ post }) {
               </Text>
             ))}
           </Box>
-        )}
+        ) : null}
 
         {/* Hashtags */}
         {post.content?.hashtags && post.content.hashtags.length > 0 && (

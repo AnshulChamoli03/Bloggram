@@ -26,14 +26,16 @@ export async function getExplore() {
  * @param {string[]} postData.mediaUrls - Array of media URLs from Firebase
  * @param {string[]} postData.tags - Array of hashtags (will be prefixed with # if needed)
  * @param {string} postData.userId - User ID (required)
+ * @param {string} postData.userName - Username to display (required)
  * @returns {Promise} Created post
  */
-export async function createPost({ text, mediaUrls = [], tags = [], userId }) {
+export async function createPost({ text, mediaUrls = [], tags = [], userId, userName }) {
   // Ensure hashtags start with #
   const formattedTags = tags.map((tag) => (tag.startsWith('#') ? tag : `#${tag}`));
   
   const response = await api.post('/api/posts', {
     user: userId,
+    userName,
     content: {
       text,
       media: mediaUrls,

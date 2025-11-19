@@ -74,7 +74,7 @@ export default function UserPanel() {
             )}
           </Box>
         </Box>
-        <Button colorScheme="blue" variant="outline" size="sm" width="100%">
+        <Button colorScheme="blue" variant="outline" size="sm" width="100%" color="white">
           Edit Profile
         </Button>
       </Box>

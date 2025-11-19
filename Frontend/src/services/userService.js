@@ -30,3 +30,7 @@ export async function getUserProfile(userId) {
   return response.data;
 }
 
+export async function getSuggestions() {  // Get user suggestions for the current user
+  const response = await api.get('/api/users/');
+  return response.data;
+}

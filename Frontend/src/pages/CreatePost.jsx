@@ -14,6 +14,7 @@ export default function CreatePost() {
   const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [userName, setUserName] = useState('');
   const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const navigate = useNavigate();
 
@@ -26,9 +27,12 @@ export default function CreatePost() {
   };
 
   useEffect(() => {
-    // Get current user ID
+    // Get current user info
     getMe()
-      .then((user) => setUserId(user._id || user.id))
+      .then((user) => {
+        setUserId(user._id || user.id);
+        setUserName(user.userName || '');
+      })
       .catch((err) => console.error('Failed to get user:', err));
   }, []);
 
@@ -65,7 +69,7 @@ export default function CreatePost() {
       return;
     }
 
-    if (!userId) {
+    if (!userId || !userName) {
       showToast('User not found. Please refresh and try again.', 'error');
       return;
     }
@@ -90,6 +94,7 @@ export default function CreatePost() {
         mediaUrls,
         tags,
         userId,
+        userName,
       });
 
       showToast('Post created successfully!', 'success');
