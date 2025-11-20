@@ -164,7 +164,7 @@ export default function CreatePost() {
                       top={2}
                       right={2}
                       size="sm"
-                      colorScheme="red.500"
+                      colorScheme="red"
                       onClick={() => removeFile(index)}
                       aria-label="Remove file"
                     />

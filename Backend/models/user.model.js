@@ -20,7 +20,11 @@ const userSchema = new mongoose.Schema({
   },
   profilePicture: {
     type: String,
-    default: ""
+    default: "",
+    validate: {
+      validator: (urls) => Array.isArray(urls) && urls.every((url) => /^https?:\/\/.+/.test(url)),
+      message: 'Each media item must be a valid http(s) URL'
+  }
   },
   bio: {
     type: String,

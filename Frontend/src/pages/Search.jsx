@@ -46,6 +46,14 @@ export default function Search() {
     }
   };
 
+  const handlePostDeleted = (postId) => {
+    if (!postId) return;
+    setResults((prev) => ({
+      ...prev,
+      posts: prev.posts.filter((post) => (post._id || post.id) !== postId),
+    }));
+  };
+
   return (
     <Container maxW="800px" py={4}>
       <Heading size="lg" mb={4}>
@@ -92,7 +100,13 @@ export default function Search() {
               No posts found
             </Box>
           ) : (
-            results.posts.map((post) => <PostCard key={post._id || post.id} post={post} />)
+            results.posts.map((post) => (
+              <PostCard
+                key={post._id || post.id}
+                post={post}
+                onDelete={handlePostDeleted}
+              />
+            ))
           )}
         </VStack>
       )}

@@ -25,6 +25,11 @@ export default function Feed({ fetchPosts }) {
     }
   };
 
+  const handlePostDeleted = (postId) => {
+    if (!postId) return;
+    setPosts((prev) => prev.filter((post) => (post._id || post.id) !== postId));
+  };
+
   if (loading) {
     return (
       <Box textAlign="center" py={8}>
@@ -55,7 +60,7 @@ export default function Feed({ fetchPosts }) {
   return (
     <VStack align="stretch" spacing={0}>
       {posts.map((post) => (
-        <PostCard key={post._id || post.id} post={post} />
+        <PostCard key={post._id || post.id} post={post} onDelete={handlePostDeleted} />
       ))}
     </VStack>
   );

@@ -55,3 +55,16 @@ export async function getPost(postId) {
   return response.data;
 }
 
+/**
+ * Delete a post by ID
+ * @param {string} postId - Post ID
+ * @returns {Promise} Delete response
+ */
+export async function deletePost(postId) {
+  if (!postId) {
+    throw new Error('Post ID is required to delete a post');
+  }
+  const response = await api.delete(`/api/posts/${postId}`);
+  return response.data;
+}
+

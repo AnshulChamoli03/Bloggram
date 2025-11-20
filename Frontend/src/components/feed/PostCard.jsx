@@ -1,12 +1,14 @@
-import { Box, Text, Button } from '@chakra-ui/react';
-import { Favorite, Comment, Share, MoreVert } from '@mui/icons-material';
-import { IconButton } from '@mui/material';
+import { Box, Text } from '@chakra-ui/react';
+import { Favorite, MoreVert } from '@mui/icons-material';
+import { IconButton, Menu, MenuItem } from '@mui/material';
 import { useState } from 'react';
+import { deletePost as deletePostService } from '../../services/postService';
 
-export default function PostCard({ post }) {
+export default function PostCard({ post, onDelete }) {
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(post.likes?.length || 0);
-
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [menuAnchor, setMenuAnchor] = useState(null);
   const handleLike = () => {
     setLiked(!liked);
     setLikeCount(liked ? likeCount - 1 : likeCount + 1);
@@ -33,16 +35,41 @@ export default function PostCard({ post }) {
   };
 
   const authorName =
-    post.userName ||
-    post.author?.userName ||
-    post.author?.name ||
-    post.author?.username ||
-    post.user?.userName ||
-    post.user?.name ||
-    post.user?.username ||
+    post.userName ||   
     'Unknown';
   const authorAvatar = post.author?.profilePicture || post.author?.avatar || post.user?.profilePicture || post.userAvatar;
   const initials = getInitials(authorName);
+
+  const openMenu = (event) => {
+    setMenuAnchor(event.currentTarget);
+  };
+
+  const closeMenu = () => {
+    setMenuAnchor(null);
+  };
+
+  const handleDeletePost = async () => {
+    if (!post?._id && !post?.id) return;
+
+    try {
+      setIsDeleting(true);
+      await deletePostService(post._id || post.id);
+      window.alert('Post deleted');
+      if (typeof onDelete === 'function') {
+        onDelete(post._id || post.id);
+      }
+    } catch (error) {
+      console.error('Failed to delete post:', error);
+      window.alert('Failed to delete post. Please try again.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteClick = async () => {
+    closeMenu();
+    await handleDeletePost();
+  };
 
   return (
     <Box bg="white" p={4} borderRadius="lg" boxShadow="sm" mb={4}>
@@ -87,9 +114,21 @@ export default function PostCard({ post }) {
           <IconButton
             size="small"
             aria-label="More options"
+            onClick={openMenu}
           >
             <MoreVert fontSize="small" />
           </IconButton>
+          <Menu
+            anchorEl={menuAnchor}
+            open={Boolean(menuAnchor)}
+            onClose={closeMenu}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+          >
+            <MenuItem onClick={handleDeleteClick} disabled={isDeleting} sx={{ color: 'error.main' }}>
+              {isDeleting ? 'Deleting...' : 'Delete'}
+            </MenuItem>
+          </Menu>
         </Box>
 
         {/* Post Content */}
@@ -217,23 +256,6 @@ export default function PostCard({ post }) {
               {likeCount}
             </Text>
           </Box>
-          <Box display="flex" gap={1} alignItems="center">
-            <IconButton
-              size="small"
-              aria-label="Comment"
-            >
-              <Comment fontSize="small" />
-            </IconButton>
-            <Text fontSize="sm" color="gray.600">
-              {post.comments?.length || 0}
-            </Text>
-          </Box>
-          <IconButton
-            size="small"
-            aria-label="Share"
-          >
-            <Share fontSize="small" />
-          </IconButton>
         </Box>
       </Box>
     </Box>

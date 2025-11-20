@@ -50,8 +50,9 @@ export default function Navbar() {
                 return (
                   <Button
                     key={item.path}
-                    colorScheme={isActive ? 'blue' : 'gray'}
-                    variant={isActive ? 'solid' : 'ghost'}
+                    color={isActive ? 'white' : 'blue.600'}
+                    bg={isActive ? 'blue.600' : 'transparent'}
+                    variant="solid"
                     onClick={() => navigate(item.path)}
                     size="md"
                     display="flex"
@@ -65,8 +66,9 @@ export default function Navbar() {
               })}
               {user && (
                 <Button
-                  colorScheme="blue"
-                  variant="ghost"
+                  color="white"
+                  bg="blue.600"
+                  variant="solid"
                   size="md"
                   display="flex"
                   alignItems="center"
