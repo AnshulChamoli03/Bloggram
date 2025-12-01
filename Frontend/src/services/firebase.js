@@ -50,5 +50,24 @@ export async function uploadMedia(files, userId) {
   return await Promise.all(uploads);
 }
 
+/**
+ * Upload a single profile picture for a user.
+ * @param {File} file - Image file to upload
+ * @param {string} userId - User ID
+ * @returns {Promise<string>} Download URL of uploaded profile image
+ */
+export async function uploadProfilePicture(file, userId) {
+  if (!file || !userId) return '';
+
+  const timestamp = Date.now();
+  const fileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+  const storagePath = `profiles/${userId}/${timestamp}_${fileName}`;
+  const fileRef = ref(storage, storagePath);
+
+  await uploadBytes(fileRef, file);
+  const downloadURL = await getDownloadURL(fileRef);
+  return downloadURL;
+}
+
 export default app;
 

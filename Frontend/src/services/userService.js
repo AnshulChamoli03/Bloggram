@@ -34,3 +34,14 @@ export async function getSuggestions() {  // Get user suggestions for the curren
   const response = await api.get('/api/users/');
   return response.data;
 }
+
+/**
+ * Update current user profile
+ * Email / mobile should not be changed here; backend can additionally enforce this.
+ * @param {Object} updates - Partial user fields to update (e.g. userName, bio, profilePicture)
+ * @returns {Promise} Updated user data
+ */
+export async function updateProfile(updates) {
+  const response = await api.put('/api/users/me', updates);
+  return response.data;
+}

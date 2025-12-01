@@ -4,6 +4,7 @@ import { connectDB } from "./config/db.js";
 import productRoutes from "./routes/post.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import cors from "cors";
+import path from "path";
 
 dotenv.config();
 
@@ -17,10 +18,18 @@ app.use(cors({
   credentials: true
 }));
 
-
-
 app.use('/api/posts', productRoutes);
 app.use('/api/users', userRoutes);
+
+const __dirname = path.resolve();
+
+if (process.env.NODE_ENV === "development") {
+  app.use(express.static(path.join(__dirname, "Frontend")));
+
+  app.get("*", (req, res) => {
+    res.sendFile(path.resolve(__dirname, "Frontend", "index.html"));
+  });
+}
 
 
 app.listen(5000, () => {

@@ -3,6 +3,7 @@ import Home from '../pages/Home';
 import Explore from '../pages/Explore';
 import Search from '../pages/Search';
 import CreatePost from '../pages/CreatePost';
+import EditProfile from '../pages/EditProfile';
 import Auth from '../pages/Auth';
 import Navbar from '../components/navbar/Navbar';
 import UserPanel from '../components/left/UserPanel';
@@ -97,6 +98,16 @@ export default function AppRouter() {
             <ProtectedRoute>
               <AuthenticatedLayout>
                 <CreatePost />
+              </AuthenticatedLayout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/edit-profile"
+          element={
+            <ProtectedRoute>
+              <AuthenticatedLayout>
+                <EditProfile />
               </AuthenticatedLayout>
             </ProtectedRoute>
           }

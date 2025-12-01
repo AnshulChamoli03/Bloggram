@@ -1,8 +1,10 @@
 import { Box, Text, Button } from '@chakra-ui/react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 export default function UserPanel() {
   const { user, loading } = useAuth();
+  const navigate = useNavigate();
 
   if (loading) {
     return (
@@ -74,7 +76,7 @@ export default function UserPanel() {
             )}
           </Box>
         </Box>
-        <Button colorScheme="blue" variant="outline" size="sm" width="100%" color="white">
+        <Button colorScheme="blue" variant="outline" size="sm" width="100%" color="white" onClick={() => navigate('/edit-profile')}>
           Edit Profile
         </Button>
       </Box>

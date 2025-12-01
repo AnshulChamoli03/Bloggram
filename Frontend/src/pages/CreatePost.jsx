@@ -158,7 +158,7 @@ export default function CreatePost() {
                         borderRadius="md"
                       />
                     )}
-                    <IconButton
+                    {/* <IconButton
                       icon={<Delete />}
                       position="absolute"
                       top={2}
@@ -167,7 +167,16 @@ export default function CreatePost() {
                       colorScheme="red.500"
                       onClick={() => removeFile(index)}
                       aria-label="Remove file"
-                    />
+                    /> */}
+                    <IconButton
+                      onClick={() => removeFile(index)}
+                      aria-label="Remove file"
+                      colorScheme="red.500"
+                      size="sm"
+                      style={{ position: 'absolute', top: '8px', right: '8px' }}
+                    >
+                      <Delete />
+                    </IconButton>
                   </Box>
                 ))}
               </Flex>
