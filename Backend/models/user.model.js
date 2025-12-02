@@ -13,6 +13,16 @@ const userSchema = new mongoose.Schema({
     lowercase: true,
     trim: true
   },
+  mobile: {
+    type: String,
+    default: "",
+    validate: {
+      validator: function(mobile) {
+        return !mobile || /^[0-9]{10}$/.test(mobile);
+      },
+      message: 'Mobile number must be exactly 10 digits'
+    }
+  },
   password: {
     type: String,
     required: true,
@@ -22,9 +32,12 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: "",
     validate: {
-      validator: (urls) => Array.isArray(urls) && urls.every((url) => /^https?:\/\/.+/.test(url)),
-      message: 'Each media item must be a valid http(s) URL'
-  }
+      validator: function(profilePicture) {
+        // Allow empty string, or a valid http(s) URL
+        return !profilePicture || /^https?:\/\/.+/.test(profilePicture);
+      },
+      message: 'Profile picture must be a valid http(s) URL'
+    }
   },
   bio: {
     type: String,

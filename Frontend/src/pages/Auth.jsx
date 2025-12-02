@@ -31,7 +31,8 @@ export default function Auth() {
     email: '',
     password: '',
     confirmPassword: '',
-    bio: ''
+    bio: '',
+    mobile: ''
   });
 
   const handleLogin = async (e) => {
@@ -244,6 +245,22 @@ export default function Auth() {
                         placeholder="Confirm your password"
                         size="lg"
                         required
+                      />
+                    </Box>
+
+                    <Box>
+                      <Text fontSize="sm" fontWeight="medium" mb={2}>
+                        Mobile (Optional)
+                      </Text>
+                      <Input
+                        type="tel"
+                        value={registerData.mobile}
+                        onChange={(e) =>
+                          setRegisterData({ ...registerData, mobile: e.target.value })
+                        }
+                        placeholder="Enter your mobile number (10 digits)"
+                        size="lg"
+                        maxLength={10}
                       />
                     </Box>
 

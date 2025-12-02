@@ -12,7 +12,7 @@ const router = express.Router();
 // Register a new user
 router.post('/register', async (req, res) => {
     try {
-        const { userName, email, password, profilePicture, bio } = req.body;
+        const { userName, email, password, profilePicture, bio, mobile } = req.body;
 
         // Validate required fields
         if (!userName || !email || !password) {
@@ -25,13 +25,20 @@ router.post('/register', async (req, res) => {
             return res.status(400).json({ error: 'User with this email already exists' });
         }
 
+        // Sanitize mobile number (remove spaces, dashes, etc.)
+        let sanitizedMobile = "";
+        if (mobile) {
+            sanitizedMobile = mobile.replace(/\D/g, ""); // Remove all non-digit characters
+        }
+
         // Create new user (password will be hashed by pre-save hook)
         const newUser = await Users.create({
             userName,
             email,
             password,
             profilePicture: profilePicture || "",
-            bio: bio || ""
+            bio: bio || "",
+            mobile: sanitizedMobile || ""
         });
 
         // Don't send password in response
@@ -45,6 +52,11 @@ router.post('/register', async (req, res) => {
     } catch (error) {
         if (error.code === 11000) {
             return res.status(400).json({ error: 'Email already exists' });
+        }
+        // Handle validation errors
+        if (error.name === 'ValidationError') {
+            const validationErrors = Object.values(error.errors).map(err => err.message);
+            return res.status(400).json({ error: 'Validation failed', details: validationErrors });
         }
         res.status(500).json({ error: 'Failed to register user', details: error.message });
     }
@@ -70,6 +82,11 @@ router.post('/login', async (req, res) => {
         const isPasswordValid = await user.comparePassword(password);
         if (!isPasswordValid) {
             return res.status(401).json({ error: 'Invalid email or password' });
+        }
+
+        // Validate user has a valid ID
+        if (!user._id || !mongoose.isValidObjectId(user._id)) {
+            return res.status(500).json({ error: 'Invalid user data', details: 'User ID is missing or invalid' });
         }
 
         // Don't send password in response
@@ -109,13 +126,101 @@ router.get('/', async (req, res) => {
 // Get current user profile (requires authentication)
 router.get('/me', authenticateToken, async (req, res) => {
     try {
-        const user = await Users.findById(req.user.userId).select('-password');
+        const userId = req.user?.userId;
+
+        // Validate userId exists and format
+        if (!userId) {
+            return res.status(400).json({ 
+                error: 'Invalid user ID in token',
+                details: 'Token does not contain a valid userId. Please login again.'
+            });
+        }
+
+        if (!mongoose.isValidObjectId(userId)) {
+            return res.status(400).json({ 
+                error: 'Invalid user ID in token',
+                details: `User ID format is invalid: ${userId}. Please login again.`
+            });
+        }
+
+        const user = await Users.findById(userId).select('-password');
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(404).json({ 
+                error: 'User not found',
+                details: 'The user associated with this token no longer exists. Please login again.'
+            });
         }
         res.status(200).json(user);
     } catch (error) {
         res.status(500).json({ error: 'Failed to fetch user profile', details: error.message });
+    }
+});
+
+// Update current user profile (requires authentication)
+router.put('/me', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user?.userId;
+
+        // Validate userId exists and format
+        if (!userId) {
+            return res.status(400).json({ 
+                error: 'Invalid user ID in token',
+                details: 'Token does not contain a valid userId. Please login again.'
+            });
+        }
+
+        if (!mongoose.isValidObjectId(userId)) {
+            return res.status(400).json({ 
+                error: 'Invalid user ID in token',
+                details: `User ID format is invalid: ${userId}. Please login again.`
+            });
+        }
+
+        // Don't allow password update through this route (use separate change password route)
+        const { password, email, ...updateData } = req.body;
+
+        // Prevent email changes through this endpoint
+        if (email !== undefined) {
+            return res.status(400).json({ error: 'Email cannot be changed through this endpoint' });
+        }
+
+        // Sanitize mobile number if provided (remove spaces, dashes, etc.)
+        if (updateData.mobile !== undefined) {
+            if (updateData.mobile) {
+                updateData.mobile = updateData.mobile.replace(/\D/g, ""); // Remove all non-digit characters
+            } else {
+                updateData.mobile = ""; // Allow clearing mobile by setting to empty string
+            }
+        }
+
+        // Check if user exists first
+        const existingUser = await Users.findById(userId);
+        if (!existingUser) {
+            return res.status(404).json({ 
+                error: 'User not found',
+                details: 'The user associated with this token no longer exists. Please login again.'
+            });
+        }
+
+        const updatedUser = await Users.findByIdAndUpdate(
+            userId,
+            updateData,
+            { new: true, runValidators: true }
+        ).select('-password');
+
+        if (!updatedUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        res.status(200).json({
+            message: 'User updated successfully',
+            user: updatedUser
+        });
+    } catch (error) {
+        if (error.code === 11000) {
+            return res.status(400).json({ error: 'Email already exists' });
+        }
+        res.status(500).json({ error: 'Failed to update user', details: error.message });
     }
 });
 

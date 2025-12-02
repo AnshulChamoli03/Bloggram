@@ -28,6 +28,7 @@ export async function login(email, password) {
  * @param {string} userData.password - User password
  * @param {string} [userData.profilePicture] - Optional profile picture URL
  * @param {string} [userData.bio] - Optional bio
+ * @param {string} [userData.mobile] - Optional mobile number (10 digits)
  * @returns {Promise} User data
  */
 export async function register(userData) {

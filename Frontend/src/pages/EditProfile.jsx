@@ -8,7 +8,7 @@ import {
   Button,
   Spinner,
 } from '@chakra-ui/react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { uploadProfilePicture } from '../services/firebase';
@@ -20,11 +20,23 @@ export default function EditProfile() {
 
   const [userName, setUserName] = useState(user?.userName || '');
   const [bio, setBio] = useState(user?.bio || '');
+  const [mobile, setMobile] = useState(user?.mobile || '');
   const [avatarPreview, setAvatarPreview] = useState(user?.profilePicture || '');
   const [profilePictureUrl, setProfilePictureUrl] = useState(user?.profilePicture || '');
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  // Sync form fields when user data changes
+  useEffect(() => {
+    if (user) {
+      setUserName(user.userName || '');
+      setBio(user.bio || '');
+      setMobile(user.mobile || '');
+      setAvatarPreview(user.profilePicture || '');
+      setProfilePictureUrl(user.profilePicture || '');
+    }
+  }, [user]);
 
   const handleAvatarChange = async (event) => {
     const file = event.target.files?.[0];
@@ -59,12 +71,13 @@ export default function EditProfile() {
       await updateProfile({
         userName: userName.trim(),
         bio: bio.trim(),
+        mobile: mobile.trim() || undefined,
         profilePicture: profilePictureUrl || undefined,
       });
 
       // Refresh auth context so UI picks up updated user
       await checkAuth();
-      navigate(-1);
+      // navigate(-1);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Failed to update profile:', err);
@@ -131,7 +144,8 @@ export default function EditProfile() {
                 htmlFor="avatar-upload"
                 size="sm"
                 colorScheme="blue"
-                isDisabled={uploading || saving}
+                disabled={uploading || saving}
+                style={{ cursor: uploading || saving ? 'not-allowed' : 'pointer' }}
               >
                 {uploading ? 'Uploading...' : 'Change Photo'}
               </Button>
@@ -150,7 +164,7 @@ export default function EditProfile() {
               value={userName}
               onChange={(e) => setUserName(e.target.value)}
               placeholder="Your display name"
-              isDisabled={saving}
+              disabled={saving}
             />
           </Box>
 
@@ -163,7 +177,7 @@ export default function EditProfile() {
               onChange={(e) => setBio(e.target.value)}
               placeholder="Tell people a bit about yourself"
               rows={4}
-              isDisabled={saving}
+              disabled={saving}
             />
           </Box>
 
@@ -172,7 +186,7 @@ export default function EditProfile() {
             <Text fontWeight="medium" mb={1}>
               Email (read-only)
             </Text>
-            <Input value={user?.email || ''} isReadOnly bg="gray.50" />
+            <Input value={user?.email || ''} readOnly bg="gray.50" />
             <Text fontSize="xs" color="gray.500" mt={1}>
               Email cannot be changed here.
             </Text>
@@ -180,11 +194,21 @@ export default function EditProfile() {
 
           <Box>
             <Text fontWeight="medium" mb={1}>
-              Mobile (read-only)
+              Mobile
             </Text>
-            <Input value={user?.phoneNumber || user?.mobile || ''} isReadOnly bg="gray.50" placeholder="Not provided" />
+            <Input
+              value={mobile}
+              onChange={(e) => {
+                // Only allow digits, max 10 characters
+                const value = e.target.value.replace(/\D/g, '').slice(0, 10);
+                setMobile(value);
+              }}
+              placeholder="Enter 10-digit mobile number"
+              disabled={saving}
+              maxLength={10}
+            />
             <Text fontSize="xs" color="gray.500" mt={1}>
-              Mobile number cannot be changed here.
+              Enter your 10-digit mobile number (optional)
             </Text>
           </Box>
 
@@ -198,10 +222,10 @@ export default function EditProfile() {
 
           {/* Actions */}
           <Box display="flex" justifyContent="flex-end" gap={3} mt={6}>
-            <Button variant="ghost" onClick={() => navigate(-1)}>
+            <Button onClick={() => navigate(-1)}>
               Cancel
             </Button>
-            <Button colorScheme="blue" onClick={handleSave} isDisabled={uploading || saving}>
+            <Button colorScheme="blue" onClick={handleSave} disabled={uploading || saving}>
               {saving ? (
                 <Box display="flex" alignItems="center" gap={2}>
                   <Spinner size="sm" /> <span>Saving...</span>

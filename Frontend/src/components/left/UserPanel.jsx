@@ -1,6 +1,7 @@
 import { Box, Text, Button } from '@chakra-ui/react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
+import BioText from '../common/BioText';
 
 export default function UserPanel() {
   const { user, loading } = useAuth();
@@ -70,9 +71,9 @@ export default function UserPanel() {
               </Text>
             )}
             {user.bio && (
-              <Text fontSize="sm" color="gray.600" textAlign="center" mt={2}>
-                {user.bio}
-              </Text>
+              <Box mt={2} width="100%">
+                <BioText bio={user.bio} fontSize="sm" color="gray.600" textAlign="center" />
+              </Box>
             )}
           </Box>
         </Box>

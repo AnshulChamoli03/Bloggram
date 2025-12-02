@@ -4,6 +4,7 @@ import { Search as SearchIcon } from '@mui/icons-material';
 import { useState } from 'react';
 import { search as searchService } from '../services/searchService';
 import PostCard from '../components/feed/PostCard';
+import BioText from '../components/common/BioText';
 
 export default function Search() {
   const [query, setQuery] = useState('');
@@ -151,8 +152,8 @@ export default function Search() {
                     </Box>
                   )}
                   {user.bio && (
-                    <Box fontSize="sm" color="gray.600" mt={1}>
-                      {user.bio}
+                    <Box mt={1}>
+                      <BioText bio={user.bio} fontSize="sm" color="gray.600" textAlign="left" />
                     </Box>
                   )}
                 </VStack>
