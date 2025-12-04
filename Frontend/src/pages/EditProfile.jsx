@@ -174,10 +174,11 @@ export default function EditProfile() {
             </Text>
             <Textarea
               value={bio}
-              onChange={(e) => setBio(e.target.value)}
+              onChange={(e) => setBio(e.target.value.slice(0, 300))}
               placeholder="Tell people a bit about yourself"
               rows={4}
               disabled={saving}
+              maxLength={300}
             />
           </Box>
 

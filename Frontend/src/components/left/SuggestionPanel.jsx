@@ -55,8 +55,8 @@ const SuggestionPanel = () => {
           No suggestions yet
         </Text>
       ) : (
-        <Box display="flex" flexDirection="column" gap={3}>
-          {suggestions.slice(0, 10).map((suggestion) => {
+        <Box display="flex" flexDirection="column" gap={3} maxHeight="200px" overflowY="auto">
+          {suggestions.map((suggestion) => {
             const displayName = suggestion.userName || suggestion.name || suggestion.email || 'Unknown';
             const initials = getInitials(displayName);
             

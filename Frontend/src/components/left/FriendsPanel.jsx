@@ -57,7 +57,7 @@ export default function FriendsPanel() {
             No connections yet
           </Text>
         ) : (
-          <Box display="flex" flexDirection="column" gap={3}>
+          <Box display="flex" flexDirection="column" gap={3} maxHeight="300px" overflowY="auto">
             {connections.slice(0, 10).map((connection) => {
               const displayName = connection.userName || connection.name || connection.email || 'Unknown';
               const initials = getInitials(displayName);

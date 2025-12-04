@@ -38,7 +38,7 @@ export default function Navbar() {
       boxShadow="sm"
     >
       <Flex maxW="1200px" mx="auto" align="center" justify="space-between">
-        <Heading size="md" color="blue.600" cursor="pointer" onClick={() => navigate('/')}>
+        <Heading size="4xl" color="blue.600" cursor="pointer" onClick={() => navigate('/')}>
           Bloggram
         </Heading>
         <Flex gap={2} align="center">
