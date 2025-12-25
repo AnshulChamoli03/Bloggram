@@ -243,6 +243,69 @@ router.get('/me/connections', authenticateToken, async (req, res) => {
     }
 });
 
+// Add or remove connection (requires authentication)
+router.post('/me/connections/:userId', authenticateToken, async (req, res) => {
+    try {
+        const { userId: targetUserId } = req.params;
+        const currentUserId = req.user.userId;
+
+        // Validate target user ID
+        if (!mongoose.isValidObjectId(targetUserId)) {
+            return res.status(400).json({ error: 'Invalid user ID' });
+        }
+
+        // Prevent self-connection
+        if (currentUserId === targetUserId) {
+            return res.status(400).json({ error: 'Cannot connect to yourself' });
+        }
+
+        // Check if target user exists
+        const targetUser = await Users.findById(targetUserId);
+        if (!targetUser) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Get current user
+        const currentUser = await Users.findById(currentUserId);
+        if (!currentUser) {
+            return res.status(404).json({ error: 'Current user not found' });
+        }
+
+        // Check if already connected
+        const isConnected = currentUser.connections.includes(targetUserId);
+        
+        if (isConnected) {
+            // Remove connection (both ways)
+            currentUser.connections = currentUser.connections.filter(
+                id => id.toString() !== targetUserId
+            );
+            targetUser.connections = targetUser.connections.filter(
+                id => id.toString() !== currentUserId
+            );
+            await currentUser.save();
+            await targetUser.save();
+            
+            res.status(200).json({ 
+                message: 'Connection removed successfully',
+                connected: false
+            });
+        } else {
+            // Add connection (both ways)
+            currentUser.connections.push(targetUserId);
+            targetUser.connections.push(currentUserId);
+            await currentUser.save();
+            await targetUser.save();
+            
+            res.status(200).json({ 
+                message: 'Connection added successfully',
+                connected: true
+            });
+        }
+    } catch (error) {
+        res.status(500).json({ error: 'Failed to update connection', details: error.message });
+    }
+});
+
 // Get user by ID
 router.get('/:id', async (req, res) => {
     try {

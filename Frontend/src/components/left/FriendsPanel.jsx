@@ -1,11 +1,13 @@
-import { Box, Heading, Text } from '@chakra-ui/react';
+import { Box, Heading, Text, Button } from '@chakra-ui/react';
 import { useState, useEffect } from 'react';
-import { getConnections } from '../../services/userService';
+import { getConnections, toggleConnection } from '../../services/userService';
 import SuggestionPanel from './SuggestionPanel';
 
 export default function FriendsPanel() {
   const [connections, setConnections] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [processing, setProcessing] = useState(new Set());
+  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     loadConnections();
@@ -20,6 +22,27 @@ export default function FriendsPanel() {
       setConnections([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleRemoveConnection = async (userId) => {
+    if (processing.has(userId)) return;
+    
+    setProcessing(prev => new Set(prev).add(userId));
+    try {
+      await toggleConnection(userId);
+      // Reload connections
+      await loadConnections();
+      // Trigger refresh in SuggestionPanel
+      setRefreshKey(prev => prev + 1);
+    } catch (error) {
+      console.error('Failed to remove connection:', error);
+    } finally {
+      setProcessing(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(userId);
+        return newSet;
+      });
     }
   };
 
@@ -61,9 +84,11 @@ export default function FriendsPanel() {
             {connections.slice(0, 10).map((connection) => {
               const displayName = connection.userName || connection.name || connection.email || 'Unknown';
               const initials = getInitials(displayName);
+              const userId = connection._id || connection.id;
+              const isProcessing = processing.has(userId);
               
               return (
-                <Box key={connection._id || connection.id} display="flex" gap={3} alignItems="center">
+                <Box key={userId} display="flex" gap={3} alignItems="center">
                   <Box
                     width="40px"
                     height="40px"
@@ -92,13 +117,29 @@ export default function FriendsPanel() {
                       </Text>
                     )}
                   </Box>
+                  <Button
+                    aria-label="Remove connection"
+                    size="sm"
+                    colorScheme="red"
+                    variant="ghost"
+                    onClick={() => handleRemoveConnection(userId)}
+                    isLoading={isProcessing}
+                    flexShrink={0}
+                    minW="32px"
+                    h="32px"
+                    p={0}
+                    fontSize="lg"
+                    color="white"
+                  >
+                    -
+                  </Button>
                 </Box>
               );
             })}
           </Box>
         )}
       </Box>
-      <SuggestionPanel />
+      <SuggestionPanel key={refreshKey} onConnectionAdded={loadConnections} />
     </Box>
   );
 }

@@ -45,3 +45,13 @@ export async function updateProfile(updates) {
   const response = await api.put('/api/users/me', updates);
   return response.data;
 }
+
+/**
+ * Add or remove connection with a user
+ * @param {string} userId - User ID to connect/disconnect with
+ * @returns {Promise} Connection status
+ */
+export async function toggleConnection(userId) {
+  const response = await api.post(`/api/users/me/connections/${userId}`);
+  return response.data;
+}
