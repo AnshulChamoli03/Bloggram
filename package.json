@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "concurrently \"nodemon Backend/server.js\" \"npm run dev --prefix Frontend\"",
     "build": "npm install && npm install --prefix Frontend && npm run build --prefix Frontend",
-    "start": "node Backend/server.js"
+    "start": "node Backend/server.js",
+    "postinstall": "npm install --prefix Frontend"
   },
   "type": "module",
   "workspaces": [

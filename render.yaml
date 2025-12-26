@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: bloggram
+    env: node
+    buildCommand: npm install && npm install --prefix Frontend && npm run build --prefix Frontend
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false
+      - key: VITE_API_BASE_URL
+        sync: false
+

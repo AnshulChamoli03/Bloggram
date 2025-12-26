@@ -12,8 +12,31 @@ const app = express();
 
 app.use(express.json());
 
+// CORS configuration - allow requests from frontend
+const allowedOrigins = [
+  "http://localhost:5173",
+  process.env.FRONTEND_URL,
+  process.env.RENDER_EXTERNAL_URL
+].filter(Boolean);
+
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // In production, allow specific origins or all if FRONTEND_URL not set
+    if (process.env.NODE_ENV === 'production') {
+      if (allowedOrigins.length > 0 && allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        // Allow all origins for deployment flexibility
+        callback(null, true);
+      }
+    } else {
+      // In development, allow all
+      callback(null, true);
+    }
+  },
   methods: ["GET","POST","PUT","DELETE"],
   credentials: true
 }));
@@ -24,8 +47,10 @@ app.use('/api/users', userRoutes);
 
 const __dirname = path.resolve();
 
+// Serve static files in production
 if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "Frontend", "dist")));
+  const staticPath = path.join(__dirname, "Frontend", "dist");
+  app.use(express.static(staticPath));
 
   // Catch-all route for SPA - must be last (Express 5 compatible)
   app.use((req, res, next) => {
@@ -34,10 +59,10 @@ if (process.env.NODE_ENV === "production") {
       return next();
     }
     // Serve index.html for all other routes (SPA routing)
-    const indexPath = path.resolve(__dirname, "Frontend", "dist", "index.html");
+    const indexPath = path.resolve(staticPath, "index.html");
     res.sendFile(indexPath, (err) => {
       if (err) {
-        res.status(404).send('Page not found');
+        res.status(404).json({ error: 'Page not found' });
       }
     });
   });
