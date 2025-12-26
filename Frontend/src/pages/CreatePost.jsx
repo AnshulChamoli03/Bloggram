@@ -33,13 +33,16 @@ export default function CreatePost() {
         setUserId(user._id || user.id);
         setUserName(user.userName || '');
       })
-      .catch((err) => console.error('Failed to get user:', err));
+      .catch(() => {
+        // Failed to get user
+      });
   }, []);
 
   const handleFileSelect = (e) => {
     const selectedFiles = Array.from(e.target.files);
-    const newFiles = [...files, ...selectedFiles];
-    setFiles(newFiles);
+    if (selectedFiles.length === 0) return;
+    
+    setFiles((prev) => [...prev, ...selectedFiles]);
 
     // Create previews
     const newPreviews = selectedFiles.map((file) => ({
@@ -47,7 +50,7 @@ export default function CreatePost() {
       url: URL.createObjectURL(file),
       type: file.type.startsWith('video/') ? 'video' : 'image',
     }));
-    setPreviews([...previews, ...newPreviews]);
+    setPreviews((prev) => [...prev, ...newPreviews]);
   };
 
   const removeFile = (index) => {
@@ -58,9 +61,14 @@ export default function CreatePost() {
   };
 
   const extractHashtags = (text) => {
+    if (!text || !text.trim()) return [];
     const hashtagRegex = /#(\w+)/g;
     const matches = text.match(hashtagRegex);
-    return matches ? matches.map((tag) => tag.substring(1)) : [];
+    if (!matches) return [];
+    // Extract hashtags without #, filter out empty strings
+    return matches
+      .map((tag) => tag.substring(1))
+      .filter((tag) => tag && tag.trim().length > 0);
   };
 
   const handleSubmit = async () => {
@@ -81,7 +89,14 @@ export default function CreatePost() {
       let mediaUrls = [];
       if (files.length > 0) {
         setUploading(true);
-        mediaUrls = await uploadMedia(files, userId);
+        try {
+          mediaUrls = await uploadMedia(files, userId);
+        } catch (uploadError) {
+          showToast(uploadError.message || 'Failed to upload media files. Please check Firebase configuration.', 'error');
+          setUploading(false);
+          setSubmitting(false);
+          return; // Stop here if upload fails
+        }
         setUploading(false);
       }
 
@@ -89,8 +104,11 @@ export default function CreatePost() {
       const tags = extractHashtags(text);
 
       // Step 3: Create post via backend API
+      // Text is optional - send empty string if no text provided
+      const postText = text.trim();
+      
       await createPost({
-        text: text.trim(),
+        text: postText,
         mediaUrls,
         tags,
         userId,
@@ -105,8 +123,26 @@ export default function CreatePost() {
       setPreviews([]);
       navigate('/');
     } catch (error) {
-      console.error('Failed to create post:', error);
-      showToast(error.response?.data?.message || 'Failed to create post. Please try again.', 'error');
+      
+      // Extract detailed error message
+      let errorMessage = 'Failed to create post. Please try again.';
+      if (error.response?.data) {
+        const errorData = error.response.data;
+        if (errorData.details && Array.isArray(errorData.details)) {
+          errorMessage = errorData.details.join('. ');
+        } else if (errorData.error) {
+          errorMessage = errorData.error;
+          if (errorData.details) {
+            errorMessage += ': ' + (Array.isArray(errorData.details) ? errorData.details.join(', ') : errorData.details);
+          }
+        } else if (errorData.message) {
+          errorMessage = errorData.message;
+        }
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      showToast(errorMessage, 'error');
     } finally {
       setUploading(false);
       setSubmitting(false);

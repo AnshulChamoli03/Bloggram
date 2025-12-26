@@ -2,10 +2,7 @@ import express from "express";
 import jwt from "jsonwebtoken";
 import Users from "../models/user.model.js";
 import mongoose from "mongoose";
-import { connectDB } from "../config/db.js";
 import { authenticateToken } from "../middleware/auth.middleware.js";
-
-connectDB();
 
 const router = express.Router();
 

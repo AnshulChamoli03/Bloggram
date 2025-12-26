@@ -11,21 +11,24 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-// Guard: ensure required env vars exist to avoid cryptic runtime errors
+// Check for missing Firebase configuration
 const missingFirebaseKeys = Object.entries(firebaseConfig)
   .filter(([, value]) => !value)
   .map(([key]) => key);
 
-if (missingFirebaseKeys.length > 0) {
-  // Surface a readable error early during app startup
-  const readable = missingFirebaseKeys.join(', ');
-  // eslint-disable-next-line no-console
-  console.error(`Missing Firebase configuration: ${readable}. Did you set VITE_FIREBASE_* in Frontend/.env and restart dev server?`);
-  throw new Error('Firebase configuration is incomplete. Check Frontend/.env values.');
-}
+let app;
+let storage;
 
-const app = initializeApp(firebaseConfig);
-const storage = getStorage(app);
+if (missingFirebaseKeys.length > 0) {
+  // Firebase not configured - app will run but uploads won't work
+} else {
+  try {
+    app = initializeApp(firebaseConfig);
+    storage = getStorage(app);
+  } catch (error) {
+    // Failed to initialize Firebase
+  }
+}
 
 /**
  * Upload media files to Firebase Storage
@@ -36,18 +39,62 @@ const storage = getStorage(app);
 export async function uploadMedia(files, userId) {
   if (!files || files.length === 0) return [];
   
-  const uploads = Array.from(files).map(async (file) => {
-    const timestamp = Date.now();
-    const fileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_'); // Sanitize filename
-    const storagePath = `posts/${userId}/${timestamp}_${fileName}`;
-    const fileRef = ref(storage, storagePath);
-    
-    await uploadBytes(fileRef, file);
-    const downloadURL = await getDownloadURL(fileRef);
-    return downloadURL;
+  // Check if Firebase is configured
+  if (!storage) {
+    throw new Error('Firebase is not configured. Please set VITE_FIREBASE_* environment variables in Frontend/.env file.');
+  }
+
+  if (!userId) {
+    throw new Error('User ID is required for file upload');
+  }
+
+  const uploads = Array.from(files).map(async (file, index) => {
+    try {
+      // Validate file
+      if (!file || !(file instanceof File)) {
+        throw new Error(`Invalid file at index ${index}`);
+      }
+
+      // Check file size (limit to 10MB per file)
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        throw new Error(`File "${file.name}" is too large. Maximum size is 10MB.`);
+      }
+
+      const timestamp = Date.now();
+      const fileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_'); // Sanitize filename
+      const storagePath = `posts/${userId}/${timestamp}_${fileName}`;
+      const fileRef = ref(storage, storagePath);
+      
+      // Upload file
+      await uploadBytes(fileRef, file);
+      
+      // Get download URL
+      const downloadURL = await getDownloadURL(fileRef);
+      
+      return downloadURL;
+    } catch (error) {
+      
+      // Provide user-friendly error messages
+      if (error.code === 'storage/unauthorized') {
+        throw new Error(`Upload failed: Permission denied. Please check Firebase Storage rules.`);
+      } else if (error.code === 'storage/canceled') {
+        throw new Error(`Upload canceled for file "${file?.name}"`);
+      } else if (error.code === 'storage/unknown') {
+        throw new Error(`Upload failed: Unknown error. Please check your internet connection and Firebase configuration.`);
+      } else if (error.message) {
+        throw new Error(`Upload failed: ${error.message}`);
+      } else {
+        throw new Error(`Failed to upload file "${file?.name}". Please try again.`);
+      }
+    }
   });
   
-  return await Promise.all(uploads);
+  try {
+    return await Promise.all(uploads);
+  } catch (error) {
+    throw error; // Re-throw to be caught by calling component
+  }
 }
 
 /**
@@ -57,16 +104,51 @@ export async function uploadMedia(files, userId) {
  * @returns {Promise<string>} Download URL of uploaded profile image
  */
 export async function uploadProfilePicture(file, userId) {
-  if (!file || !userId) return '';
+  if (!file || !userId) {
+    throw new Error('File and user ID are required');
+  }
 
-  const timestamp = Date.now();
-  const fileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-  const storagePath = `profiles/${userId}/${timestamp}_${fileName}`;
-  const fileRef = ref(storage, storagePath);
+  // Check if Firebase is configured
+  if (!storage) {
+    throw new Error('Firebase is not configured. Please set VITE_FIREBASE_* environment variables in Frontend/.env file.');
+  }
 
-  await uploadBytes(fileRef, file);
-  const downloadURL = await getDownloadURL(fileRef);
-  return downloadURL;
+  try {
+    // Validate file type (only images)
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Only image files are allowed for profile pictures');
+    }
+
+    // Check file size (limit to 5MB for profile pictures)
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      throw new Error('Profile picture is too large. Maximum size is 5MB.');
+    }
+
+    const timestamp = Date.now();
+    const fileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+    const storagePath = `profiles/${userId}/${timestamp}_${fileName}`;
+    const fileRef = ref(storage, storagePath);
+
+    await uploadBytes(fileRef, file);
+    const downloadURL = await getDownloadURL(fileRef);
+    
+    return downloadURL;
+  } catch (error) {
+    
+    // Provide user-friendly error messages
+    if (error.code === 'storage/unauthorized') {
+      throw new Error('Upload failed: Permission denied. Please check Firebase Storage rules.');
+    } else if (error.code === 'storage/canceled') {
+      throw new Error('Upload canceled');
+    } else if (error.code === 'storage/unknown') {
+      throw new Error('Upload failed: Unknown error. Please check your internet connection and Firebase configuration.');
+    } else if (error.message) {
+      throw error; // Re-throw with original message
+    } else {
+      throw new Error('Failed to upload profile picture. Please try again.');
+    }
+  }
 }
 
 export default app;

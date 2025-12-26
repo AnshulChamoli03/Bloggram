@@ -9,7 +9,8 @@ export default function Feed({ fetchPosts }) {
 
   useEffect(() => {
     loadPosts();
-  }, [fetchPosts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const loadPosts = async () => {
     try {
@@ -18,7 +19,6 @@ export default function Feed({ fetchPosts }) {
       const data = await fetchPosts();
       setPosts(Array.isArray(data) ? data : data.posts || []);
     } catch (err) {
-      console.error('Failed to load posts:', err);
       setError('Failed to load posts. Please try again.');
     } finally {
       setLoading(false);

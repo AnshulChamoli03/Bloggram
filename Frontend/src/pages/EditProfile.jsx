@@ -50,8 +50,6 @@ export default function EditProfile() {
       setProfilePictureUrl(url);
       setAvatarPreview(url);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to upload profile picture:', err);
       setError('Failed to upload profile picture. Please try again.');
     } finally {
       setUploading(false);
@@ -79,8 +77,6 @@ export default function EditProfile() {
       await checkAuth();
       // navigate(-1);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to update profile:', err);
       const message =
         err.response?.data?.message ||
         err.response?.data?.error ||

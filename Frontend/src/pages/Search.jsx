@@ -30,7 +30,7 @@ export default function Search() {
         setResults((prev) => ({ ...prev, posts: Array.isArray(data) ? data : data.posts || [] }));
       }
     } catch (error) {
-      console.error('Search failed:', error);
+      // Search failed
     } finally {
       setLoading(false);
     }

@@ -1,8 +1,10 @@
 import { Box, Heading, Text, Button } from '@chakra-ui/react';
 import { useState, useEffect } from 'react';
 import { getSuggestions, toggleConnection, getConnections } from '../../services/userService';
+import { useAuth } from '../../contexts/AuthContext';
 
 const SuggestionPanel = ({ onConnectionAdded }) => {
+  const { user: currentUser } = useAuth();
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [connectedUsers, setConnectedUsers] = useState(new Set());
@@ -18,7 +20,6 @@ const SuggestionPanel = ({ onConnectionAdded }) => {
       const data = await getSuggestions();
         setSuggestions(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Failed to load suggestions:', error);
       setSuggestions([]);
     } finally {
       setLoading(false);
@@ -33,7 +34,7 @@ const SuggestionPanel = ({ onConnectionAdded }) => {
       );
       setConnectedUsers(connectionIds);
     } catch (error) {
-      console.error('Failed to load connections:', error);
+      // Failed to load connections
     }
   };
 
@@ -50,7 +51,7 @@ const SuggestionPanel = ({ onConnectionAdded }) => {
         onConnectionAdded();
       }
     } catch (error) {
-      console.error('Failed to toggle connection:', error);
+      // Failed to toggle connection
     } finally {
       setProcessing(prev => {
         const newSet = new Set(prev);
@@ -89,10 +90,12 @@ const SuggestionPanel = ({ onConnectionAdded }) => {
           ))}
         </Box>
       ) : (() => {
-        // Filter out connected users from suggestions
+        // Filter out connected users and current user from suggestions
+        const currentUserId = currentUser?._id || currentUser?.id;
         const filteredSuggestions = suggestions.filter((suggestion) => {
           const userId = suggestion._id || suggestion.id;
-          return !connectedUsers.has(userId);
+          // Exclude current user and connected users
+          return userId !== currentUserId && !connectedUsers.has(userId);
         });
 
         return filteredSuggestions.length === 0 ? (

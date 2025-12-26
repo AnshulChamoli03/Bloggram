@@ -30,14 +30,20 @@ export async function getExplore() {
  * @returns {Promise} Created post
  */
 export async function createPost({ text, mediaUrls = [], tags = [], userId, userName }) {
-  // Ensure hashtags start with #
-  const formattedTags = tags.map((tag) => (tag.startsWith('#') ? tag : `#${tag}`));
+  // Ensure hashtags start with # and filter out empty/invalid tags
+  const formattedTags = tags
+    .filter((tag) => tag && typeof tag === 'string' && tag.trim().length > 0)
+    .map((tag) => {
+      const trimmed = tag.trim();
+      return trimmed.startsWith('#') ? trimmed : `#${trimmed}`;
+    })
+    .filter((tag) => /^#[a-z0-9_]+$/i.test(tag)); // Final validation
   
   const response = await api.post('/api/posts', {
     user: userId,
     userName,
     content: {
-      text,
+      text: text || '', // Text is optional, send empty string if not provided
       media: mediaUrls,
     },
     hashtags: formattedTags,

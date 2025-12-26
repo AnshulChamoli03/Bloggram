@@ -18,7 +18,6 @@ export default function FriendsPanel() {
       const data = await getConnections();
       setConnections(Array.isArray(data) ? data : []);
     } catch (error) {
-      console.error('Failed to load connections:', error);
       setConnections([]);
     } finally {
       setLoading(false);
@@ -36,7 +35,7 @@ export default function FriendsPanel() {
       // Trigger refresh in SuggestionPanel
       setRefreshKey(prev => prev + 1);
     } catch (error) {
-      console.error('Failed to remove connection:', error);
+      // Failed to remove connection
     } finally {
       setProcessing(prev => {
         const newSet = new Set(prev);

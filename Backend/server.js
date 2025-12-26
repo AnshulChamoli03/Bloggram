@@ -1,7 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import { connectDB } from "./config/db.js";
-import productRoutes from "./routes/post.routes.js";
+import postRoutes from "./routes/post.routes.js";
 import userRoutes from "./routes/user.routes.js";
 import cors from "cors";
 import path from "path";
@@ -18,22 +18,48 @@ app.use(cors({
   credentials: true
 }));
 
-app.use('/api/posts', productRoutes);
+// API routes
+app.use('/api/posts', postRoutes);
 app.use('/api/users', userRoutes);
 
 const __dirname = path.resolve();
 
-if (process.env.NODE_ENV === "development") {
-  app.use(express.static(path.join(__dirname, "Frontend")));
+if (process.env.NODE_ENV === "production") {
+  app.use(express.static(path.join(__dirname, "Frontend", "dist")));
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.resolve(__dirname, "Frontend", "index.html"));
+  // Catch-all route for SPA - must be last (Express 5 compatible)
+  app.use((req, res, next) => {
+    // Skip API routes
+    if (req.path.startsWith('/api')) {
+      return next();
+    }
+    // Serve index.html for all other routes (SPA routing)
+    const indexPath = path.resolve(__dirname, "Frontend", "dist", "index.html");
+    res.sendFile(indexPath, (err) => {
+      if (err) {
+        res.status(404).send('Page not found');
+      }
+    });
   });
 }
 
+const PORT = process.env.PORT || 5000;
 
-app.listen(5000, () => {
-    connectDB();
-    console.log('Server is running on http://localhost:5000');
+// Start server
+app.listen(PORT, () => {
+    // Server started successfully
+    // Connect to database in background (non-blocking)
+    connectDB().catch(() => {
+        // Database connection failed, but server continues running
+    });
+});
+
+// Handle uncaught errors
+process.on('uncaughtException', (error) => {
+    process.exit(1);
+});
+
+process.on('unhandledRejection', (error) => {
+    // Handle unhandled promise rejections
 });
 

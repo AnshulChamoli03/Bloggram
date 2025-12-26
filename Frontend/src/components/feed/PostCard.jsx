@@ -59,7 +59,6 @@ export default function PostCard({ post, onDelete }) {
         onDelete(post._id || post.id);
       }
     } catch (error) {
-      console.error('Failed to delete post:', error);
       window.alert('Failed to delete post. Please try again.');
     } finally {
       setIsDeleting(false);
