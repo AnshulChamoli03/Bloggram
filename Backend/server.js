@@ -50,7 +50,44 @@ const __dirname = path.resolve();
 // Serve static files in production
 if (process.env.NODE_ENV === "production") {
   const staticPath = path.join(__dirname, "Frontend", "dist");
-  app.use(express.static(staticPath));
+  
+  // Serve static files with explicit MIME type handling
+  app.use(express.static(staticPath, {
+    setHeaders: (res, filePath) => {
+      const ext = path.extname(filePath).toLowerCase();
+      
+      // Set correct MIME types for all file types
+      if (ext === '.css') {
+        res.setHeader('Content-Type', 'text/css; charset=utf-8');
+      } else if (ext === '.js' || ext === '.mjs') {
+        res.setHeader('Content-Type', 'application/javascript; charset=utf-8');
+      } else if (ext === '.json') {
+        res.setHeader('Content-Type', 'application/json; charset=utf-8');
+      } else if (ext === '.html') {
+        res.setHeader('Content-Type', 'text/html; charset=utf-8');
+      } else if (ext === '.png') {
+        res.setHeader('Content-Type', 'image/png');
+      } else if (ext === '.jpg' || ext === '.jpeg') {
+        res.setHeader('Content-Type', 'image/jpeg');
+      } else if (ext === '.svg') {
+        res.setHeader('Content-Type', 'image/svg+xml');
+      } else if (ext === '.gif') {
+        res.setHeader('Content-Type', 'image/gif');
+      } else if (ext === '.webp') {
+        res.setHeader('Content-Type', 'image/webp');
+      } else if (ext === '.woff') {
+        res.setHeader('Content-Type', 'font/woff');
+      } else if (ext === '.woff2') {
+        res.setHeader('Content-Type', 'font/woff2');
+      } else if (ext === '.ttf') {
+        res.setHeader('Content-Type', 'font/ttf');
+      } else if (ext === '.eot') {
+        res.setHeader('Content-Type', 'application/vnd.ms-fontobject');
+      } else if (ext === '.otf') {
+        res.setHeader('Content-Type', 'font/otf');
+      }
+    }
+  }));
 
   // Catch-all route for SPA - must be last (Express 5 compatible)
   app.use((req, res, next) => {
